@@ -2,6 +2,7 @@ const express = require('express');
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
+const axios= require("axios");
 const public_users = express.Router();
 
 const doesExist = (username)=>{
@@ -29,17 +30,31 @@ public_users.post("/register", (req,res) => {
     return res.status(404).json({message: "Unable to register user."});
 });
 
-// Get the book list available in the shop
-public_users.get('/',function (req, res) {
-  //Write your code here
-  res.send(JSON.stringify(books,null,10));
+// Get the book list available in the shop using axios
+
+public_users.get("/", async (req, res) => {
+    try {
+        const data= axios.get('https://houssemeddi6-5000.theiadocker-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/');
+        res.status(200).json(books)
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' })
+    }
 });
 
-// Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
-  //Write your code here
-  const isbn = req.params.isbn;
-  res.send(books[isbn]);
+// Get book details based on ISBN using axios
+public_users.get('/isbn/:isbn', function (req, res){
+  let {isbn}= req.params;
+  axios
+  .get(`https://houssemeddi6-5000.theiadocker-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/${isbn}`)
+  .then( res.send(books[isbn])
+  )
+  .catch(function(error) {
+      if(error.response){
+          let {status , statustext} = error.response;
+          res.status(status).send(statustext);
+      } else {
+    res.status(404).send(error);}
+})
  });
   
 // Get book details based on author
